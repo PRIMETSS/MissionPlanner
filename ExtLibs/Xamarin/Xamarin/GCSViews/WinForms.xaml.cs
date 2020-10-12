@@ -602,11 +602,11 @@ namespace Xamarin.GCSViews
                         surface.Canvas.DrawImage(hwnd.hwndbmp,
                             new SKPoint(x + 0, y + 0),
                             new SKPaint() {FilterQuality = SKFilterQuality.Low});
-
+                        /*
                         surface.Canvas.DrawLine(x, y, x + 50, y + 50, Pens.Red.ToSKPaint());
 
                         surface.Canvas.DrawText("  " + x + " " + y, new SKPoint(x, y+15),
-                            new SKPaint() {Color = SKColor.Parse("ffff00")});
+                            new SKPaint() {Color = SKColor.Parse("ffff00")});*/
                     }
                     else
                     {
