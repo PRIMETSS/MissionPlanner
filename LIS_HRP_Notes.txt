@@ -2,7 +2,7 @@ Notes
 
 	Refer notes on how to build custom MAVLink messages contained in LIS_Logger.xml MAVLink definitions file in LIS_HRP Solution
 
-	Created new Fork of MissionPlanner
+	Created new Fork of MissionPlanner (Prev using 1.3.72, Trying 1.3.73)
 	Sync
 	Create new LIS_Modifications Branch
 	A local Master is also created

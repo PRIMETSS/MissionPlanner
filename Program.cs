@@ -146,13 +146,15 @@ namespace MissionPlanner
 
             if (args.Length > 0 && args[0] == "/update")
             {
-                Utilities.Update.DoUpdate();
+                // LIS_Modification
+                //Utilities.Update.DoUpdate();
                 return;
             }
             if (args.Length > 0 && args[0] == "/updatebeta")
             {
-                Utilities.Update.dobeta = true;
-                Utilities.Update.DoUpdate();
+                // LIS_Modification
+                //Utilities.Update.dobeta = true;
+                //Utilities.Update.DoUpdate();
                 return;
             }
 
