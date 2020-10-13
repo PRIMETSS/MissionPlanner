@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<mavlink>
+  <!-- LISD_LOGGER MAVLink Message Definitions -->
+  <!-- MAVLink ID range 420                    -->
+  <!-- FileVersion: 1.6                        -->
+
+  <enums>
+
+    <enum name="LIS_LOGGER_HEARTBEAT_STATUS">
+      <description>MAVLINK component type reported in HEARTBEAT message.</description>
+      <entry name="OK" value="0">
+        <description>All components are working normally.</description>
+      </entry>
+      <entry name="Fault" value="1">
+        <description>One or more components are in fault state.</description>
+      </entry>
+    </enum>
+
+    <!-- Not used
+    <enum name="LISLOGGER_VOLTAGE_RANGE">
+      <entry name="Range_10mv" value="0"/>
+      <entry name="Range_25mv" value="1"/>
+      <entry name="Range_50mv" value="2"/>
+      <entry name="Range_100mv" value="3"/>
+      <entry name="Range_250mv" value="4"/>
+      <entry name="Range_500mv" value="5"/>
+      <entry name="Range_1v" value="6"/>
+      <entry name="Range_2_5v" value="7"/>
+      <entry name="Range_5v" value="8"/>
+      <entry name="Range_10v" value="9"/>
+      <entry name="Range_25v" value="10"/>
+      <entry name="Range_50v" value="11"/>
+    </enum>-->
+
+    <enum name="LISLOGGER_RECORDING_STATUS">
+      <entry name="NotRecording" value="0"/>
+      <entry name="Recording" value="1"/>
+    </enum>
+
+    <enum name="LISLOGGER_DIPOLE_ORIENTATION">
+      <entry name="Deg0" value="0"/>
+      <entry name="Deg45" value="1"/>
+    </enum>
+
+    <!-- The MAV_CMD enum entries describe either: -->
+    <!--  * the data payload of mission items (as used in the MISSION_ITEM and MISSION_ITEM_INT messages) -->
+    <!--  * the data payload of mavlink commands (as used in the COMMAND_INT and COMMAND_LONG messages) -->
+    <!-- ALL the entries in the MAV_CMD enum have a maximum of 7 parameters -->
+    <enum name="LISLOGGER_CMD">
+
+      <entry value="700" name="LISLOGGER_CMD_RECORDING_MODE" hasLocation="false" isDestination="false">
+        <description>Logging start/stop recording.</description>
+        <param index="1">State (0: stop, 1: start).</param>
+        <param index="2">Empty.</param>
+        <param index="3">Empty.</param>
+        <param index="4">Empty.</param>
+        <param index="5">Empty.</param>
+        <param index="6">Empty.</param>
+        <param index="7">Empty.</param>
+      </entry>
+      
+      <!-- Sets the Data Acquisition Devices hardware voltage level-->
+      <entry value="701" name="LISLOGGER_CMD_SET_VOLTAGE_RANGE" hasLocation="false" isDestination="false">
+        <description>Set AtoD voltage range.</description>
+        <param index="1" label="Range" enum="LISLOGGER_VOLTAGE_RANGE">Voltage range [LISLOGGER_VOLTAGE_RANGE].</param>
+        <param index="2">Empty.</param>
+        <param index="3">Empty.</param>
+        <param index="4">Empty.</param>
+        <param index="5">Empty.</param>
+        <param index="6">Empty.</param>
+        <param index="7">Empty.</param>
+      </entry>
+
+      <!-- Sets the Data Acquisition Devices hardware voltage level-->
+      <entry value="702" name="LISLOGGER_CMD_SET_CHANNEL_OFFSET_VOLTAGES" hasLocation="false" isDestination="false">
+        <description>Set voltage offset for channels.</description>
+        <param index="1" label="Range">Offset Voltage CH1.</param>
+        <param index="2" label="Range">Offset Voltage CH2.</param>
+        <param index="3">Empty.</param>
+        <param index="4">Empty.</param>
+        <param index="5">Empty.</param>
+        <param index="6">Empty.</param>
+        <param index="7">Empty.</param>
+      </entry>
+
+      <!-- Use 'MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN' ?-->
+      <entry value="799" name="LISLOGGER_CMD_LIS_LOGGER_REBOOT_APM">
+        <description>Reboot the Loggers APM.</description>
+        <param index="1" label="Autopilot" minValue="0" maxValue="2" increment="1">0: Do nothing for autopilot, 1: Reboot autopilot.</param>
+        <param index="2">Empty.</param>
+        <param index="3">Empty.</param>
+        <param index="4">Empty.</param>
+        <param index="5">Empty.</param>
+        <param index="6">Empty.</param>
+        <param index="7">Empty.</param>
+      </entry>
+
+    </enum>
+  </enums>
+
+
+  <!-- Messages Only unique to Logger, as dont need to repeat any information already sent in the typical MAVLink data stream, eg GPS -->
+  <messages>
+
+    <message id="400" name="LIS_LOGGER_HEARTBEAT">
+      <description>Heartbeat from LIS_LOGGER.</description>
+      <field type="uint8_t" name="status" enum="LIS_LOGGER_HEARTBEAT_STATUS">Status.</field>
+      <field type="float" name="hardware_range">Current AtoD hardware scale range.</field>
+      <!-- Could use this to update UI on remote, and allow user to select if Log Recording locally or not -->
+      <field type="uint8_t" name="recording_status" enum="LISLOGGER_RECORDING_STATUS">Current logger recording status.</field>
+      <field type="uint8_t" name="dipole_orientation" enum="LISLOGGER_DIPOLE_ORIENTATION">Current logger dipole orientation.</field>
+      <field type="uint8_t" name="system_battery_charge">Current laptops bettery level %.</field>
+    </message>
+
+    <message id="401" name="LIS_LOGGER_PROBE_DATA">
+      <description>Probe message from a LIS_LOGGER.</description>
+      <!-- Format 103830.392 -->
+      <field type="int64_t" name="system_time">Current System Time in Ticks.</field>
+      <field type="double" name="volts_northsouth">Last North South dipole voltage.</field>
+      <field type="double" name="volts_eastwest">Last East West dipole voltage.</field>
+    </message>
+
+
+  </messages>
+</mavlink>

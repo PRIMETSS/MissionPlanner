@@ -1,0 +1,37 @@
+Notes
+
+	Refer notes on how to build custom MAVLink messages contained in LIS_Logger.xml MAVLink definitions file in LIS_HRP Solution
+
+	Created new Fork of MissionPlanner
+	Sync
+	Create new LIS_Modifications Branch
+	A local Master is also created
+
+	Merge master/upstream into (local master or LIS_Modifications?)
+
+
+Update from upstream
+
+	To update, Update upstrema/master, then merge that into local Master, and then update LIS_HRP1_Modifications from local master
+
+
+Isses:
+
+	Had to edit mavgen_cs.py, and common.xml to remove errors regenerating MAVLink custom classes.
+
+	To get Custom MAVLink messages to appear in MP, need to copy they LIS_Logger.xml, edit ardupilotmega.xml to inculed and recomplie
+
+	Errors in regenerate.bat (run in command line):
+		Fix add paraths to print statments print(...) in mavgen_cs.py
+		Manual removed bitmask=".." from 2 locations in common.xml
+
+		regenerate.bat python error not module future
+			Install pip, the import 'future' https://docs.python.org/3/installing/index.html			
+				python -m ensurepip --default-pip https://docs.python.org/3/installing/index.html#pip-not-installed
+				pyton -m pip install future  (admin console)
+		Check LIS_Logger msg are in generated Mavlink.cs
+
+	VisualStudio 2019 16.7.5 Has issues showing CGSView WinForm Design pages which shows controls.
+	Error in System.WinForm....
+		Upgraded SKIASharp to latest version fixed it. But after upgrading SKIASHarp.Views to latest version got red X's in some controls.
+		Down grading SKIASharp.view seems to resolve it...

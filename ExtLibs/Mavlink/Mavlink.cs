@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 public partial class MAVLink
 {
-    public const string MAVLINK_BUILD_DATE = "Fri Sep 04 2020";
+    public const string MAVLINK_BUILD_DATE = "Tue Oct 13 2020";
     public const string MAVLINK_WIRE_PROTOCOL_VERSION = "2.0";
     public const int MAVLINK_MAX_PAYLOAD_LEN = 255;
 
@@ -247,6 +247,8 @@ public partial class MAVLink
         new message_info(350, "DEBUG_FLOAT_ARRAY", 232, 20, 252, typeof( mavlink_debug_float_array_t )),
         new message_info(373, "GENERATOR_STATUS", 117, 42, 42, typeof( mavlink_generator_status_t )),
         new message_info(375, "ACTUATOR_OUTPUT_STATUS", 251, 140, 140, typeof( mavlink_actuator_output_status_t )),
+        new message_info(400, "LIS_LOGGER_HEARTBEAT", 116, 8, 8, typeof( mavlink_lis_logger_heartbeat_t )),
+        new message_info(401, "LIS_LOGGER_PROBE_DATA", 245, 24, 24, typeof( mavlink_lis_logger_probe_data_t )),
         new message_info(9000, "WHEEL_DISTANCE", 113, 137, 137, typeof( mavlink_wheel_distance_t )),
         new message_info(9005, "WINCH_STATUS", 117, 34, 34, typeof( mavlink_winch_status_t )),
         new message_info(10001, "UAVIONIX_ADSB_OUT_CFG", 209, 20, 20, typeof( mavlink_uavionix_adsb_out_cfg_t )),
@@ -515,6 +517,8 @@ public partial class MAVLink
         DEBUG_FLOAT_ARRAY = 350,
         GENERATOR_STATUS = 373,
         ACTUATOR_OUTPUT_STATUS = 375,
+        LIS_LOGGER_HEARTBEAT = 400,
+        LIS_LOGGER_PROBE_DATA = 401,
         WHEEL_DISTANCE = 9000,
         WINCH_STATUS = 9005,
         UAVIONIX_ADSB_OUT_CFG = 10001,
@@ -1019,7 +1023,7 @@ public partial class MAVLink
         ///<summary> FLY button has been held for 1.5 seconds. |Takeoff altitude.| Empty.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
         [Description("FLY button has been held for 1.5 seconds.")]
         SOLO_BTN_FLY_HOLD=42002, 
-        ///<summary> PAUSE button has been clicked. |1 if Solo is in a shot mode, 0 otherwise.| Empty.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
+        ///<summary> PAUSE button has been clicked. |1 if Solo is in a shot mode, 0 otherwise.| Empty.| Empty.| pty.| Empty.| Empty.| Empty.|  </summary>
         [Description("PAUSE button has been clicked.")]
         SOLO_BTN_PAUSE_CLICK=42003, 
         ///<summary> Magnetometer calibration based on fixed position         in earth field given by inclination, declination and intensity. |Magnetic declination.| Magnetic inclination.| Magnetic intensity.| Yaw.| Empty.| Empty.| Empty.|  </summary>
@@ -5281,7 +5285,62 @@ public partial class MAVLink
     };
     
     
-    /// extensions_start 0 linenumber 1120
+    ///<summary> MAVLINK component type reported in HEARTBEAT message. </summary>
+    public enum LIS_LOGGER_HEARTBEAT_STATUS: byte
+    {
+        ///<summary> All components are working normally. | </summary>
+        [Description("All components are working normally.")]
+        OK=0, 
+        ///<summary> One or more components are in fault state. | </summary>
+        [Description("One or more components are in fault state.")]
+        Fault=1, 
+        
+    };
+    
+    ///<summary>  </summary>
+    public enum LISLOGGER_RECORDING_STATUS: byte
+    {
+        ///<summary>  | </summary>
+        [Description("")]
+        NotRecording=0, 
+        ///<summary>  | </summary>
+        [Description("")]
+        Recording=1, 
+        
+    };
+    
+    ///<summary>  </summary>
+    public enum LISLOGGER_DIPOLE_ORIENTATION: byte
+    {
+        ///<summary>  | </summary>
+        [Description("")]
+        Deg0=0, 
+        ///<summary>  | </summary>
+        [Description("")]
+        Deg45=1, 
+        
+    };
+    
+    ///<summary>  </summary>
+    public enum LISLOGGER_CMD: int /*default*/
+    {
+        ///<summary> Logging start/stop recording. |State (0: stop, 1: start).| Empty.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
+        [Description("Logging start/stop recording.")]
+        RECORDING_MODE=700, 
+        ///<summary> Set AtoD voltage range. |Voltage range [LISLOGGER_VOLTAGE_RANGE].| Empty.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
+        [Description("Set AtoD voltage range.")]
+        SET_VOLTAGE_RANGE=701, 
+        ///<summary> Set voltage offset for channels. |Offset Voltage CH1.| Offset Voltage CH2.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
+        [Description("Set voltage offset for channels.")]
+        SET_CHANNEL_OFFSET_VOLTAGES=702, 
+        ///<summary> Reboot the Loggers APM. |0: Do nothing for autopilot, 1: Reboot autopilot.| Empty.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
+        [Description("Reboot the Loggers APM.")]
+        LIS_LOGGER_REBOOT_APM=799, 
+        
+    };
+    
+    
+    /// extensions_start 0 linenumber 1121
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=42)]
     ///<summary> Offsets and calibrations values for hardware sensors. This makes it easier to debug the calibration process. </summary>
     public struct mavlink_sensor_offsets_t
@@ -5354,7 +5413,7 @@ public partial class MAVLink
     };
 
     [Obsolete]
-    /// extensions_start 0 linenumber 1135
+    /// extensions_start 0 linenumber 1136
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=8)]
     ///<summary> Set the magnetometer offsets </summary>
     public struct mavlink_set_mag_offsets_t
@@ -5392,7 +5451,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 2 linenumber 1144
+    /// extensions_start 2 linenumber 1145
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=8)]
     ///<summary> State of APM memory. </summary>
     public struct mavlink_meminfo_t
@@ -5420,7 +5479,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1151
+    /// extensions_start 0 linenumber 1152
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=12)]
     ///<summary> Raw ADC output. </summary>
     public struct mavlink_ap_adc_t
@@ -5463,7 +5522,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1161
+    /// extensions_start 0 linenumber 1162
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=15)]
     ///<summary> Configure on-board Camera Control System. </summary>
     public struct mavlink_digicam_configure_t
@@ -5531,7 +5590,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1175
+    /// extensions_start 0 linenumber 1176
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=13)]
     ///<summary> Control on-board Camera Control System to take shots. </summary>
     public struct mavlink_digicam_control_t
@@ -5594,7 +5653,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1189
+    /// extensions_start 0 linenumber 1190
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=6)]
     ///<summary> Message to configure a camera mount, directional antenna, etc. </summary>
     public struct mavlink_mount_configure_t
@@ -5637,7 +5696,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1198
+    /// extensions_start 0 linenumber 1199
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=15)]
     ///<summary> Message to control a camera mount, directional antenna, etc. </summary>
     public struct mavlink_mount_control_t
@@ -5680,7 +5739,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1207
+    /// extensions_start 0 linenumber 1208
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=14)]
     ///<summary> Message with some status from APM to GCS about camera or antenna mount. </summary>
     public struct mavlink_mount_status_t
@@ -5718,7 +5777,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1216
+    /// extensions_start 0 linenumber 1217
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=12)]
     ///<summary> A fence point. Used to set a point when from GCS -> MAV. Also used to return a point from MAV -> GCS. </summary>
     public struct mavlink_fence_point_t
@@ -5761,7 +5820,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1225
+    /// extensions_start 0 linenumber 1226
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=3)]
     ///<summary> Request a current fence point from MAV. </summary>
     public struct mavlink_fence_fetch_point_t
@@ -5789,7 +5848,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1231
+    /// extensions_start 0 linenumber 1232
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=28)]
     ///<summary> Status of DCM attitude estimator. </summary>
     public struct mavlink_ahrs_t
@@ -5837,7 +5896,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1241
+    /// extensions_start 0 linenumber 1242
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=44)]
     ///<summary> Status of simulation environment, if used. </summary>
     public struct mavlink_simstate_t
@@ -5905,7 +5964,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1255
+    /// extensions_start 0 linenumber 1256
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=3)]
     ///<summary> Status of key hardware. </summary>
     public struct mavlink_hwstatus_t
@@ -5928,7 +5987,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1260
+    /// extensions_start 0 linenumber 1261
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=9)]
     ///<summary> Status generated by radio. </summary>
     public struct mavlink_radio_t
@@ -5976,7 +6035,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1271
+    /// extensions_start 0 linenumber 1272
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=22)]
     ///<summary> Status of AP_Limits. Sent in extended status stream when AP_Limits is enabled. </summary>
     public struct mavlink_limits_status_t
@@ -6034,7 +6093,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1283
+    /// extensions_start 0 linenumber 1284
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=12)]
     ///<summary> Wind estimation. </summary>
     public struct mavlink_wind_t
@@ -6062,7 +6121,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1289
+    /// extensions_start 0 linenumber 1290
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=18)]
     ///<summary> Data packet, size 16. </summary>
     public struct mavlink_data16_t
@@ -6091,7 +6150,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1295
+    /// extensions_start 0 linenumber 1296
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=34)]
     ///<summary> Data packet, size 32. </summary>
     public struct mavlink_data32_t
@@ -6120,7 +6179,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1301
+    /// extensions_start 0 linenumber 1302
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=66)]
     ///<summary> Data packet, size 64. </summary>
     public struct mavlink_data64_t
@@ -6149,7 +6208,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1307
+    /// extensions_start 0 linenumber 1308
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=98)]
     ///<summary> Data packet, size 96. </summary>
     public struct mavlink_data96_t
@@ -6178,7 +6237,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1313
+    /// extensions_start 0 linenumber 1314
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=8)]
     ///<summary> Rangefinder reporting. </summary>
     public struct mavlink_rangefinder_t
@@ -6201,7 +6260,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1318
+    /// extensions_start 0 linenumber 1319
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=48)]
     ///<summary> Airspeed auto-calibration. </summary>
     public struct mavlink_airspeed_autocal_t
@@ -6274,7 +6333,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1334
+    /// extensions_start 0 linenumber 1335
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=19)]
     ///<summary> A rally point. Used to set a point when from GCS -> MAV. Also used to return a point from MAV -> GCS. </summary>
     public struct mavlink_rally_point_t
@@ -6337,7 +6396,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1348
+    /// extensions_start 0 linenumber 1349
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=3)]
     ///<summary> Request a current rally point from MAV. MAV should respond with a RALLY_POINT message. MAV should not respond if the request is invalid. </summary>
     public struct mavlink_rally_fetch_point_t
@@ -6365,7 +6424,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1354
+    /// extensions_start 0 linenumber 1355
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=20)]
     ///<summary> Status of compassmot calibration. </summary>
     public struct mavlink_compassmot_status_t
@@ -6408,7 +6467,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1363
+    /// extensions_start 0 linenumber 1364
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=24)]
     ///<summary> Status of secondary AHRS filter if available. </summary>
     public struct mavlink_ahrs2_t
@@ -6451,7 +6510,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1373
+    /// extensions_start 0 linenumber 1374
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=29)]
     ///<summary> Camera Event. </summary>
     public struct mavlink_camera_status_t
@@ -6509,7 +6568,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 13 linenumber 1389
+    /// extensions_start 13 linenumber 1390
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=47)]
     ///<summary> Camera Capture Feedback. </summary>
     public struct mavlink_camera_feedback_t
@@ -6592,7 +6651,7 @@ public partial class MAVLink
     };
 
     [Obsolete]
-    /// extensions_start 0 linenumber 1415
+    /// extensions_start 0 linenumber 1416
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=4)]
     ///<summary> 2nd Battery status </summary>
     public struct mavlink_battery2_t
@@ -6615,7 +6674,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1421
+    /// extensions_start 0 linenumber 1422
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=40)]
     ///<summary> Status of third AHRS filter if available. This is for ANU research group (Ali and Sean). </summary>
     public struct mavlink_ahrs3_t
@@ -6678,7 +6737,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1434
+    /// extensions_start 0 linenumber 1435
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=2)]
     ///<summary> Request the autopilot version from the system/component. </summary>
     public struct mavlink_autopilot_version_request_t
@@ -6701,7 +6760,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1440
+    /// extensions_start 0 linenumber 1441
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=206)]
     ///<summary> Send a block of log data to remote location. </summary>
     public struct mavlink_remote_log_data_block_t
@@ -6735,7 +6794,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1447
+    /// extensions_start 0 linenumber 1448
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=7)]
     ///<summary> Send Status of each log block that autopilot board might have sent. </summary>
     public struct mavlink_remote_log_block_status_t
@@ -6768,7 +6827,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1454
+    /// extensions_start 0 linenumber 1455
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=29)]
     ///<summary> Control vehicle LEDs. </summary>
     public struct mavlink_led_control_t
@@ -6812,7 +6871,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1463
+    /// extensions_start 0 linenumber 1464
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=27)]
     ///<summary> Reports progress of compass calibration. </summary>
     public struct mavlink_mag_cal_progress_t
@@ -6871,7 +6930,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 14 linenumber 1475
+    /// extensions_start 14 linenumber 1476
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=54)]
     ///<summary> Reports results of completed compass calibration. Sent until MAG_CAL_ACK received. </summary>
     public struct mavlink_mag_cal_report_t
@@ -6974,7 +7033,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 6 linenumber 1498
+    /// extensions_start 6 linenumber 1499
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=26)]
     ///<summary> EKF Status message including flags and variances. </summary>
     public struct mavlink_ekf_status_report_t
@@ -7022,7 +7081,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1512
+    /// extensions_start 0 linenumber 1513
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=25)]
     ///<summary> PID tuning information. </summary>
     public struct mavlink_pid_tuning_t
@@ -7070,7 +7129,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1522
+    /// extensions_start 0 linenumber 1523
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=37)]
     ///<summary> Deepstall path planning. </summary>
     public struct mavlink_deepstall_t
@@ -7133,7 +7192,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1535
+    /// extensions_start 0 linenumber 1536
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=42)]
     ///<summary> 3 axis gimbal measurements. </summary>
     public struct mavlink_gimbal_report_t
@@ -7206,7 +7265,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1550
+    /// extensions_start 0 linenumber 1551
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=14)]
     ///<summary> Control message for rate gimbal. </summary>
     public struct mavlink_gimbal_control_t
@@ -7244,7 +7303,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1558
+    /// extensions_start 0 linenumber 1559
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=8)]
     ///<summary> 100 Hz gimbal torque command telemetry. </summary>
     public struct mavlink_gimbal_torque_cmd_report_t
@@ -7282,7 +7341,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1567
+    /// extensions_start 0 linenumber 1568
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=3)]
     ///<summary> Heartbeat from a HeroBus attached GoPro. </summary>
     public struct mavlink_gopro_heartbeat_t
@@ -7310,7 +7369,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1574
+    /// extensions_start 0 linenumber 1575
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=3)]
     ///<summary> Request a GOPRO_COMMAND response from the GoPro. </summary>
     public struct mavlink_gopro_get_request_t
@@ -7338,7 +7397,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1580
+    /// extensions_start 0 linenumber 1581
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=6)]
     ///<summary> Response from a GOPRO_COMMAND get request. </summary>
     public struct mavlink_gopro_get_response_t
@@ -7367,7 +7426,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1586
+    /// extensions_start 0 linenumber 1587
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=7)]
     ///<summary> Request to set a GOPRO_COMMAND with a desired. </summary>
     public struct mavlink_gopro_set_request_t
@@ -7401,7 +7460,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1593
+    /// extensions_start 0 linenumber 1594
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=2)]
     ///<summary> Response from a GOPRO_COMMAND set request. </summary>
     public struct mavlink_gopro_set_response_t
@@ -7424,7 +7483,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1599
+    /// extensions_start 0 linenumber 1600
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=65)]
     ///<summary> EFI status output </summary>
     public struct mavlink_efi_status_t
@@ -7522,7 +7581,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1619
+    /// extensions_start 0 linenumber 1620
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=8)]
     ///<summary> RPM sensor output. </summary>
     public struct mavlink_rpm_t
@@ -7545,7 +7604,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 9 linenumber 1625
+    /// extensions_start 9 linenumber 1626
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=52)]
     ///<summary> Read registers for a device. </summary>
     public struct mavlink_device_op_read_t
@@ -7609,7 +7668,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 5 linenumber 1639
+    /// extensions_start 5 linenumber 1640
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=136)]
     ///<summary> Read registers reply. </summary>
     public struct mavlink_device_op_read_reply_t
@@ -7653,7 +7712,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 10 linenumber 1649
+    /// extensions_start 10 linenumber 1650
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=180)]
     ///<summary> Write registers for a device. </summary>
     public struct mavlink_device_op_write_t
@@ -7723,7 +7782,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1664
+    /// extensions_start 0 linenumber 1665
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=5)]
     ///<summary> Write registers reply. </summary>
     public struct mavlink_device_op_write_reply_t
@@ -7746,7 +7805,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1670
+    /// extensions_start 0 linenumber 1671
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=49)]
     ///<summary> Adaptive Controller tuning information. </summary>
     public struct mavlink_adap_tuning_t
@@ -7824,7 +7883,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1687
+    /// extensions_start 0 linenumber 1688
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=44)]
     ///<summary> Camera vision based attitude and position deltas. </summary>
     public struct mavlink_vision_position_delta_t
@@ -7864,7 +7923,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1696
+    /// extensions_start 0 linenumber 1697
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=16)]
     ///<summary> Angle of Attack and Side Slip Angle. </summary>
     public struct mavlink_aoa_ssa_t
@@ -7892,7 +7951,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1702
+    /// extensions_start 0 linenumber 1703
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=44)]
     ///<summary> ESC Telemetry Data for ESCs 1 to 4, matching data sent by BLHeli ESCs. </summary>
     public struct mavlink_esc_telemetry_1_to_4_t
@@ -7941,7 +8000,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1711
+    /// extensions_start 0 linenumber 1712
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=44)]
     ///<summary> ESC Telemetry Data for ESCs 5 to 8, matching data sent by BLHeli ESCs. </summary>
     public struct mavlink_esc_telemetry_5_to_8_t
@@ -7990,7 +8049,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1720
+    /// extensions_start 0 linenumber 1721
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=44)]
     ///<summary> ESC Telemetry Data for ESCs 9 to 12, matching data sent by BLHeli ESCs. </summary>
     public struct mavlink_esc_telemetry_9_to_12_t
@@ -8039,7 +8098,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1729
+    /// extensions_start 0 linenumber 1730
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=37)]
     ///<summary> Configure an OSD parameter slot. </summary>
     public struct mavlink_osd_param_config_t
@@ -8103,7 +8162,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1742
+    /// extensions_start 0 linenumber 1743
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=5)]
     ///<summary> Configure OSD parameter reply. </summary>
     public struct mavlink_osd_param_config_reply_t
@@ -8126,7 +8185,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1747
+    /// extensions_start 0 linenumber 1748
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=8)]
     ///<summary> Read a configured an OSD parameter slot. </summary>
     public struct mavlink_osd_param_show_config_t
@@ -8164,7 +8223,7 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 1755
+    /// extensions_start 0 linenumber 1756
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=34)]
     ///<summary> Read configured OSD parameter reply. </summary>
     public struct mavlink_osd_param_show_config_reply_t
@@ -17035,6 +17094,72 @@ public partial class MAVLink
         [Units("")]
         [Description("See the TRACK_BAND_TYPES enum.")]
         public  /*ICAROUS_TRACK_BAND_TYPES*/byte type5;
+    
+    };
+
+    
+    /// extensions_start 0 linenumber 105
+    [StructLayout(LayoutKind.Sequential,Pack=1,Size=8)]
+    ///<summary> Heartbeat from LIS_LOGGER. </summary>
+    public struct mavlink_lis_logger_heartbeat_t
+    {
+        public mavlink_lis_logger_heartbeat_t(float hardware_range,/*LIS_LOGGER_HEARTBEAT_STATUS*/byte status,/*LISLOGGER_RECORDING_STATUS*/byte recording_status,/*LISLOGGER_DIPOLE_ORIENTATION*/byte dipole_orientation,byte system_battery_charge) 
+        {
+              this.hardware_range = hardware_range;
+              this.status = status;
+              this.recording_status = recording_status;
+              this.dipole_orientation = dipole_orientation;
+              this.system_battery_charge = system_battery_charge;
+            
+        }
+        /// <summary>Current AtoD hardware scale range.   </summary>
+        [Units("")]
+        [Description("Current AtoD hardware scale range.")]
+        public  float hardware_range;
+            /// <summary>Status. LIS_LOGGER_HEARTBEAT_STATUS  </summary>
+        [Units("")]
+        [Description("Status.")]
+        public  /*LIS_LOGGER_HEARTBEAT_STATUS*/byte status;
+            /// <summary>Current logger recording status. LISLOGGER_RECORDING_STATUS  </summary>
+        [Units("")]
+        [Description("Current logger recording status.")]
+        public  /*LISLOGGER_RECORDING_STATUS*/byte recording_status;
+            /// <summary>Current logger dipole orientation. LISLOGGER_DIPOLE_ORIENTATION  </summary>
+        [Units("")]
+        [Description("Current logger dipole orientation.")]
+        public  /*LISLOGGER_DIPOLE_ORIENTATION*/byte dipole_orientation;
+            /// <summary>Current laptops bettery level %.   </summary>
+        [Units("")]
+        [Description("Current laptops bettery level %.")]
+        public  byte system_battery_charge;
+    
+    };
+
+    
+    /// extensions_start 0 linenumber 115
+    [StructLayout(LayoutKind.Sequential,Pack=1,Size=24)]
+    ///<summary> Probe message from a LIS_LOGGER. </summary>
+    public struct mavlink_lis_logger_probe_data_t
+    {
+        public mavlink_lis_logger_probe_data_t(long system_time,double volts_northsouth,double volts_eastwest) 
+        {
+              this.system_time = system_time;
+              this.volts_northsouth = volts_northsouth;
+              this.volts_eastwest = volts_eastwest;
+            
+        }
+        /// <summary>Current System Time in Ticks.   </summary>
+        [Units("")]
+        [Description("Current System Time in Ticks.")]
+        public  long system_time;
+            /// <summary>Last North South dipole voltage.   </summary>
+        [Units("")]
+        [Description("Last North South dipole voltage.")]
+        public  double volts_northsouth;
+            /// <summary>Last East West dipole voltage.   </summary>
+        [Units("")]
+        [Description("Last East West dipole voltage.")]
+        public  double volts_eastwest;
     
     };
 
