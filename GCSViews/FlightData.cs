@@ -5175,5 +5175,20 @@ namespace MissionPlanner.GCSViews
                // contextMenuStripMap.Show(gMapControl1, e.Location);
             }
         }
+
+        // LIS_HRP_Modification
+        private void BUT_injectGPSRTK_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var mp = new MissionPlanner.GCSViews.ConfigurationView.ConfigSerialInjectGPS();
+                mp.BUT_connect_Click(null, null);
+
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show(Strings.CommandFailed, Strings.ERROR);
+            }
+        }
     }
 }

@@ -47,7 +47,7 @@
     <PackageReference Include="System.Resources.Extensions" Version="4.7.1" />
     <PackageReference Include="System.Text.Encoding" Version="4.3.0" />
     <PackageReference Include="System.Text.Encoding.Extensions" Version="4.3.0" />
-    <PackageReference Include="Tewr.Blazor.FileReader" Version="2.0.0.20200" />
+    <PackageReference Include="Tewr.Blazor.FileReader" Version="2.0.0.20242" />
     <PackageReference Include="Tewr.BlazorWorker.BackgroundService" Version="1.3.0" />
     <PackageReference Include="Toolbelt.Blazor.SpeechSynthesis" Version="8.0.0" />
     <PackageReference Include="WebGLDotNET" Version="2.1.0" />
