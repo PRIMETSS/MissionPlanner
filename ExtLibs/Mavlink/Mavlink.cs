@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 public partial class MAVLink
 {
-    public const string MAVLINK_BUILD_DATE = "Tue Oct 13 2020";
+    public const string MAVLINK_BUILD_DATE = "Sat Oct 31 2020";
     public const string MAVLINK_WIRE_PROTOCOL_VERSION = "2.0";
     public const int MAVLINK_MAX_PAYLOAD_LEN = 255;
 
@@ -247,7 +247,7 @@ public partial class MAVLink
         new message_info(350, "DEBUG_FLOAT_ARRAY", 232, 20, 252, typeof( mavlink_debug_float_array_t )),
         new message_info(373, "GENERATOR_STATUS", 117, 42, 42, typeof( mavlink_generator_status_t )),
         new message_info(375, "ACTUATOR_OUTPUT_STATUS", 251, 140, 140, typeof( mavlink_actuator_output_status_t )),
-        new message_info(400, "LIS_LOGGER_HEARTBEAT", 116, 8, 8, typeof( mavlink_lis_logger_heartbeat_t )),
+        new message_info(400, "LIS_LOGGER_HEARTBEAT", 181, 13, 13, typeof( mavlink_lis_logger_heartbeat_t )),
         new message_info(401, "LIS_LOGGER_PROBE_DATA", 245, 24, 24, typeof( mavlink_lis_logger_probe_data_t )),
         new message_info(9000, "WHEEL_DISTANCE", 113, 137, 137, typeof( mavlink_wheel_distance_t )),
         new message_info(9005, "WINCH_STATUS", 117, 34, 34, typeof( mavlink_winch_status_t )),
@@ -5333,6 +5333,12 @@ public partial class MAVLink
         ///<summary> Set voltage offset for channels. |Offset Voltage CH1.| Offset Voltage CH2.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
         [Description("Set voltage offset for channels.")]
         SET_CHANNEL_OFFSET_VOLTAGES=702, 
+        ///<summary> Set HP filter cutoff freq. |Cutoff Freq.| Empty.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
+        [Description("Set HP filter cutoff freq.")]
+        SET_HPFILTER_CUTOFF_FREQ=703, 
+        ///<summary> Set HP filter enable disabled. |State (0: disabled, 1: enabled)| Empty.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
+        [Description("Set HP filter enable disabled.")]
+        SET_HPFILTER_STATE=704, 
         ///<summary> Reboot the Loggers APM. |0: Do nothing for autopilot, 1: Reboot autopilot.| Empty.| Empty.| Empty.| Empty.| Empty.| Empty.|  </summary>
         [Description("Reboot the Loggers APM.")]
         LIS_LOGGER_REBOOT_APM=799, 
@@ -17098,24 +17104,30 @@ public partial class MAVLink
     };
 
     
-    /// extensions_start 0 linenumber 105
-    [StructLayout(LayoutKind.Sequential,Pack=1,Size=8)]
+    /// extensions_start 0 linenumber 129
+    [StructLayout(LayoutKind.Sequential,Pack=1,Size=13)]
     ///<summary> Heartbeat from LIS_LOGGER. </summary>
     public struct mavlink_lis_logger_heartbeat_t
     {
-        public mavlink_lis_logger_heartbeat_t(float hardware_range,/*LIS_LOGGER_HEARTBEAT_STATUS*/byte status,/*LISLOGGER_RECORDING_STATUS*/byte recording_status,/*LISLOGGER_DIPOLE_ORIENTATION*/byte dipole_orientation,byte system_battery_charge) 
+        public mavlink_lis_logger_heartbeat_t(float hardware_range,float hpfilter_cutoff_freq,/*LIS_LOGGER_HEARTBEAT_STATUS*/byte status,/*LISLOGGER_RECORDING_STATUS*/byte recording_status,/*LISLOGGER_DIPOLE_ORIENTATION*/byte dipole_orientation,byte system_battery_charge,byte hpfilter_enabled) 
         {
               this.hardware_range = hardware_range;
+              this.hpfilter_cutoff_freq = hpfilter_cutoff_freq;
               this.status = status;
               this.recording_status = recording_status;
               this.dipole_orientation = dipole_orientation;
               this.system_battery_charge = system_battery_charge;
+              this.hpfilter_enabled = hpfilter_enabled;
             
         }
         /// <summary>Current AtoD hardware scale range.   </summary>
         [Units("")]
         [Description("Current AtoD hardware scale range.")]
         public  float hardware_range;
+            /// <summary>HP Filter cutoff freq.   </summary>
+        [Units("")]
+        [Description("HP Filter cutoff freq.")]
+        public  float hpfilter_cutoff_freq;
             /// <summary>Status. LIS_LOGGER_HEARTBEAT_STATUS  </summary>
         [Units("")]
         [Description("Status.")]
@@ -17132,11 +17144,15 @@ public partial class MAVLink
         [Units("")]
         [Description("Current laptops bettery level %.")]
         public  byte system_battery_charge;
+            /// <summary>HP Filter enabled.   </summary>
+        [Units("")]
+        [Description("HP Filter enabled.")]
+        public  byte hpfilter_enabled;
     
     };
 
     
-    /// extensions_start 0 linenumber 115
+    /// extensions_start 0 linenumber 141
     [StructLayout(LayoutKind.Sequential,Pack=1,Size=24)]
     ///<summary> Probe message from a LIS_LOGGER. </summary>
     public struct mavlink_lis_logger_probe_data_t
