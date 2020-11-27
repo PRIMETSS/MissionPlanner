@@ -5182,7 +5182,11 @@ namespace MissionPlanner.GCSViews
             try
             {
                 var mp = new MissionPlanner.GCSViews.ConfigurationView.ConfigSerialInjectGPS();
-                mp.BUT_connect_Click(null, null);
+                                
+                 mp.BUT_connect_Click(null, null);
+            //    Thread.Sleep(10000); // Wait for ComPort to open
+            //    mp.but_restartsvin_Click(null, null); // Restart Survey (This invalidates RTCM) (Doesnt appear to be working! Does update uBlox Module's TMode)
+            // uBlox will default to what ever survey TMODE3 is set in NVR Config
 
             }
             catch (Exception ex)

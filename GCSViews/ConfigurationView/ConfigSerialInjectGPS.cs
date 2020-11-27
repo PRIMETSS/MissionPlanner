@@ -1232,7 +1232,8 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             Settings.Instance["SerialInjectGPS_SITime"] = txt_surveyinDur.Text.ToString();
         }
 
-        private void but_restartsvin_Click(object sender, EventArgs e)
+        // LIS_HRP Modification
+        public void but_restartsvin_Click(object sender, EventArgs e)
         {
             basepos = PointLatLngAlt.Zero;
             invalidateRTCMStatus();
