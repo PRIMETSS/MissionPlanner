@@ -14,6 +14,9 @@ Update from upstream
 
 	To update, Update upstrema/master, then merge that into local Master, and then update LIS_HRP1_Modifications from local master
 
+Rebasing GIT
+
+	https://www.youtube.com/watch?v=f1wnYdLEpgI
 
 Isses:
 
