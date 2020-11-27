@@ -27,6 +27,7 @@ using Extensions = MissionPlanner.Utilities.Extensions;
 using Form = System.Windows.Forms.Form;
 using Point = System.Drawing.Point;
 using Rectangle = System.Drawing.Rectangle;
+using MissionPlanner.Controls;
 
 namespace Xamarin.GCSViews
 {
@@ -46,7 +47,10 @@ namespace Xamarin.GCSViews
 
             var scale = size.Width / size.Height; // 1.77 1.6  1.33
 
-            size = new Forms.Size(960, 540/*960/scale*/);
+
+            size = new Forms.Size(540 * scale, 540);
+            if (size.Width < 960)
+                size = new Forms.Size(960, 960 / scale);
             
             Instance = this;
             MainV2.speechEngine = new Speech();
@@ -85,11 +89,20 @@ namespace Xamarin.GCSViews
             // report back device list
             SerialPort.GetCustomPorts = () =>
             {
-                return Task.Run(async () =>
+                var list1 = Task.Run(async () =>
+                {
+                    var list = await Test.BlueToothDevice.GetDeviceInfoList();
+                    return list.Select(a => a.board).ToList();
+                }).Result;
+
+                var list2 = Task.Run(async () =>
                 {
                     var list = await Test.UsbDevices.GetDeviceInfoList();
                     return list.Select(a => a.board).ToList();
                 }).Result;
+
+                list1.AddRange(list2);
+                return list1;
             };
 
             // support for fw upload
@@ -258,8 +271,6 @@ namespace Xamarin.GCSViews
 
             winforms = new Thread(() =>
             {
-                AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-
                 var init = true;
 
                 Application.Idle += (sender, args) =>
@@ -506,9 +517,10 @@ namespace Xamarin.GCSViews
             } catch {}
         }
 
+        private SKPaint paint = new SKPaint() {FilterQuality = SKFilterQuality.Low};
+
         private bool DrawOntoSurface(IntPtr handle, SKSurface surface)
         {
-
             var hwnd = Hwnd.ObjectFromHandle(handle);
 
             var x = 0;
@@ -572,18 +584,16 @@ namespace Xamarin.GCSViews
                     if (surface.Canvas.DeviceClipBounds.Width > 0 &&
                         surface.Canvas.DeviceClipBounds.Height > 0)
                     {
-
-                        surface.Canvas.DrawImage(hwnd.hwndbmpNC,
-                            new SKPoint(x - borders.left, y - borders.top),
-                            new SKPaint() {FilterQuality = SKFilterQuality.Low});
+                        if (hwnd.hwndbmpNC != null)
+                            surface.Canvas.DrawImage(hwnd.hwndbmpNC,
+                                new SKPoint(x - borders.left, y - borders.top), paint);
 
                         surface.Canvas.ClipRect(
                             SKRect.Create(x, y, hwnd.width - borders.right - borders.left,
                                 hwnd.height - borders.top - borders.bottom), SKClipOperation.Intersect);
-                       
+
                         surface.Canvas.DrawImage(hwnd.hwndbmp,
-                            new SKPoint(x, y),
-                            new SKPaint() {FilterQuality = SKFilterQuality.Low});
+                            new SKPoint(x, y), paint);
 
                     }
                     else
@@ -599,8 +609,10 @@ namespace Xamarin.GCSViews
                     {
 
                         surface.Canvas.DrawImage(hwnd.hwndbmp,
-                            new SKPoint(x + 0, y + 0),
-                            new SKPaint() {FilterQuality = SKFilterQuality.Low});
+                            new SKPoint(x + 0, y + 0), paint);
+
+                        /*surface.Canvas.DrawText(hwnd.ClientWindow.ToString(), new SKPoint(x,y+15),
+                            new SKPaint() {Color = SKColor.Parse("ffff00")});*/
 
                     }
                     else
@@ -612,7 +624,6 @@ namespace Xamarin.GCSViews
 
                 Monitor.Exit(XplatUIMine.paintlock);
             }
-
             //surface.Canvas.DrawText(x + " " + y, x, y+10, new SKPaint() { Color =  SKColors.Red});
 
             if (hwnd.Mapped && hwnd.Visible)
@@ -629,6 +640,17 @@ namespace Xamarin.GCSViews
                                 return true;
                             return false;
                         }).Select(a => (Hwnd) a.Value).ToArray();
+
+                children = children.OrderBy((hwnd2) =>
+                {
+                    var info = XplatUIMine.GetInstance().GetZOrder(hwnd2.client_window);
+                    if (info.top)
+                        return 1000;
+                    if (info.bottom)
+                        return 0;
+                    return 500;
+
+                });
 
                 foreach (var child in children)
                 {
@@ -662,31 +684,7 @@ namespace Xamarin.GCSViews
                     if (form.IsHandleCreated)
                     {
                         if (form is MainV2 && form.WindowState != FormWindowState.Maximized)
-                            form.WindowState = FormWindowState.Maximized;
-
-                        if (form.WindowState == FormWindowState.Maximized)
-                        {
-                            var border = Hwnd.GetBorders(form.GetCreateParams(), null);
-
-                            //XplatUI.driver.SetWindowPos(form.Handle, 0, 0, (int) Screen.PrimaryScreen.Bounds.Width + border.right + border.left,                            (int) Screen.PrimaryScreen.Bounds.Height + border.top + border.bottom);
-                        }
-                        else
-                        {
-                            if (form.Location.X < 0 || form.Location.Y < 0)
-                            {
-                                form.Location = new Point(Math.Max(form.Location.X, 0), Math.Max(form.Location.Y, 0));
-                            }
-
-                            var border = Hwnd.GetBorders(form.GetCreateParams(), null);
-
-                            if (form.Size.Width > Screen.PrimaryScreen.Bounds.Width ||
-                                form.Size.Height > Screen.PrimaryScreen.Bounds.Height)
-                            {
-                                //form.Size = new System.Drawing.Size((int) Screen.PrimaryScreen.Bounds.Width, (int) Screen.PrimaryScreen.Bounds.Height);
-                                XplatUI.driver.SetWindowPos(form.Handle, 0, 0, (int) Screen.PrimaryScreen.Bounds.Width,
-                                    (int) Screen.PrimaryScreen.Bounds.Height);
-                            }
-                        }
+                            form.BeginInvokeIfRequired(() => { form.WindowState = FormWindowState.Maximized; });
 
                         try
                         {
@@ -732,6 +730,9 @@ namespace Xamarin.GCSViews
                         new SKPaint()
                             {Color = SKColors.Black, Style = SKPaintStyle.Stroke, StrokeJoin = SKStrokeJoin.Miter, IsAntialias = true});
                 }
+
+                surface.Canvas.DrawText("" + DateTime.Now.ToString("HH:mm:ss.fff"),
+                    new SKPoint(10, 10), new SKPaint() {Color = SKColor.Parse("ffff00")});
 
                 surface.Canvas.Flush();
 

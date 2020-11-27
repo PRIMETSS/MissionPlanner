@@ -393,6 +393,8 @@ namespace MissionPlanner
                 if (_comPort == value)
                     return;
                 _comPort = value;
+                if (instance == null)
+                    return;
                 _comPort.MavChanged -= instance.comPort_MavChanged;
                 _comPort.MavChanged += instance.comPort_MavChanged;
                 instance.comPort_MavChanged(null, null);
@@ -417,7 +419,7 @@ namespace MissionPlanner
 
         public ConcurrentDictionary<string, adsb.PointLatLngAltHdg> adsbPlanes = new ConcurrentDictionary<string, adsb.PointLatLngAltHdg>();
 
-        string titlebar;
+        public static string titlebar;
 
         /// <summary>
         /// Comport name
@@ -541,13 +543,20 @@ namespace MissionPlanner
             MenuHelp.Visible = DisplayConfiguration.displayHelp;
             MissionPlanner.Controls.BackstageView.BackstageView.Advanced = DisplayConfiguration.isAdvancedMode;
 
-            if (Settings.Instance.GetBoolean("menu_autohide") != DisplayConfiguration.autoHideMenuForce)
+            // force autohide on
+            if (DisplayConfiguration.autoHideMenuForce)
             {
-                AutoHideMenu(DisplayConfiguration.autoHideMenuForce);
-                Settings.Instance["menu_autohide"] = DisplayConfiguration.autoHideMenuForce.ToString();
+                AutoHideMenu(true);
+                Settings.Instance["menu_autohide"] = true.ToString();
+                autoHideToolStripMenuItem.Visible = false;
+            } 
+            else if (Settings.Instance.GetBoolean("menu_autohide"))
+            {
+                AutoHideMenu(Settings.Instance.GetBoolean("menu_autohide"));
+                Settings.Instance["menu_autohide"] = Settings.Instance.GetBoolean("menu_autohide").ToString();
             }
 
-            autoHideToolStripMenuItem.Visible = !DisplayConfiguration.autoHideMenuForce;
+            
 
             //Flight data page
             if (MainV2.instance.FlightData != null)
@@ -1655,6 +1664,8 @@ namespace MissionPlanner
                                     cancel.Cancel();
                                     sender.doWorkArgs.CancelAcknowledged = true;
                                 }
+
+                                Thread.Sleep(10);
                             }
 
                             var paramfile = paramfileTask.Result;
@@ -1674,8 +1685,9 @@ namespace MissionPlanner
                                             a.Type;
                                         MainV2.comPort.SaveToTlog(gen.GenerateMAVLinkPacket10(
                                             MAVLink.MAVLINK_MSG_ID.PARAM_VALUE,
-                                            new MAVLink.mavlink_param_value_t(a.float_value, (ushort)mavlist.Count, 0,
-                                                a.Name.MakeBytesSize(16), (byte)a.Type)));
+                                            new MAVLink.mavlink_param_value_t((float) a.Value, (ushort) mavlist.Count,
+                                                0,
+                                                a.Name.MakeBytesSize(16), (byte) a.Type)));
                                     });
 
                                     ftpfile = true;
@@ -1698,28 +1710,26 @@ namespace MissionPlanner
                 _connectionControl.UpdateSysIDS();             
 
                 // check for newer firmware
-                var softwares = Firmware.LoadSoftwares();
-
-                if (softwares.Count > 0)
+                Task.Run(() =>
                 {
                     try
                     {
                         string[] fields1 = comPort.MAV.VersionString.Split(' ');
 
-                        foreach (Firmware.software item in softwares)
-                        {
-                            string[] fields2 = item.name.Split(' ');
+                        var softwares = APFirmware.GetReleaseNewest(APFirmware.RELEASE_TYPES.OFFICIAL);
 
+                        foreach (var item in softwares)
+                        {
                             // check primare firmware type. ie arudplane, arducopter
-                            if (fields1[0] == fields2[0])
+                            if (fields1[0].ToLower().Contains(item.VehicleType.ToLower()))
                             {
                                 Version ver1 = VersionDetection.GetVersion(comPort.MAV.VersionString);
-                                Version ver2 = VersionDetection.GetVersion(item.name);
+                                Version ver2 = item.MavFirmwareVersion;
 
                                 if (ver2 > ver1)
                                 {
-                                    Common.MessageShowAgain(Strings.NewFirmware + "-" + item.name,
-                                        Strings.NewFirmwareA + item.name + Strings.Pleaseup +
+                                    Common.MessageShowAgain(Strings.NewFirmware + "-" + item.VehicleType + " " + ver2,
+                                        Strings.NewFirmwareA + item.VehicleType + " " + ver2 + Strings.Pleaseup +
                                         "[link;https://discuss.ardupilot.org/tags/stable-release;Release Notes]");
                                     break;
                                 }
@@ -1733,7 +1743,7 @@ namespace MissionPlanner
                     {
                         log.Error(ex);
                     }
-                }
+                });
 
                 FlightData.CheckBatteryShow();
 
@@ -2795,8 +2805,12 @@ namespace MissionPlanner
                     if (comPort.MAV.param.TotalReceived < comPort.MAV.param.TotalReported)
                     {
                         if (comPort.MAV.param.TotalReported > 0 && comPort.BaseStream.IsOpen)
-                            instance.status1.Percent =
-                                (comPort.MAV.param.TotalReceived / (double)comPort.MAV.param.TotalReported) * 100.0;
+                        {
+                            this.BeginInvokeIfRequired(() =>
+                                instance.status1.Percent =
+                                    (comPort.MAV.param.TotalReceived / (double) comPort.MAV.param.TotalReported) *
+                                    100.0);
+                        }
                     }
 
                     // send a hb every seconds from gcs to ap
@@ -3127,6 +3141,17 @@ namespace MissionPlanner
 
             // update firmware version list - only once per day
             ThreadPool.QueueUserWorkItem(BGFirmwareCheck);
+
+            ThreadPool.QueueUserWorkItem((s) =>
+            {
+                try
+                {
+                    UserAlert.GetAlerts();
+                }
+                catch
+                {
+                }
+            });
 
             log.Info("start AutoConnect");
             AutoConnect.NewMavlinkConnection += (sender, serial) =>
@@ -3596,7 +3621,7 @@ namespace MissionPlanner
             {
                 try
                 {
-                    GDAL.GDAL.ScanDirectory(Settings.Instance["GDALImageDir"]);
+                    Utilities.GDAL.ScanDirectory(Settings.Instance["GDALImageDir"]);
                 }
                 catch (Exception ex)
                 {
@@ -3643,10 +3668,7 @@ namespace MissionPlanner
             {
                 if (Settings.Instance["fw_check"] != DateTime.Now.ToShortDateString())
                 {
-                    var fw = new Firmware();
-                    var list = fw.getFWList();
-                    if (list.Count > 1)
-                        Firmware.SaveSoftwares(new Firmware.optionsObject() { softwares = list });
+                    APFirmware.GetList("https://firmware.oborne.me/manifest.json.gz");
 
                     Settings.Instance["fw_check"] = DateTime.Now.ToShortDateString();
                 }
@@ -3861,7 +3883,9 @@ namespace MissionPlanner
             }
             if (keyData == (Keys.Control | Keys.L)) // limits
             {
-                new DigitalSkyUI().ShowUserControl();
+                //new DigitalSkyUI().ShowUserControl();
+
+                new SpectrogramUI().Show();
 
                 return true;
             }

@@ -476,6 +476,10 @@ namespace MissionPlanner.GCSViews
             {
                 hud1.batteryon = false;
             }
+
+            //Check if we want to display calculated battery cell voltage
+            hud1.displayCellVoltage = Settings.Instance.GetBoolean("HUD_showbatterycell", false);
+            hud1.batterycellcount = Settings.Instance.GetInt32("HUD_batterycellcount", 0);
         }
 
         public void CreateChart(ZedGraphControl zgc)
@@ -1448,9 +1452,12 @@ namespace MissionPlanner.GCSViews
                             timeout = 0;
                             while (MainV2.comPort.MAV.cs.alt < (lastwpdata.alt - 2))
                             {
-                                MainV2.comPort.doCommand((byte) MainV2.comPort.sysidcurrent,
+                                if(!MainV2.comPort.doCommand((byte) MainV2.comPort.sysidcurrent,
                                     (byte) MainV2.comPort.compidcurrent, MAVLink.MAV_CMD.TAKEOFF, 0, 0, 0, 0, 0, 0,
-                                    lastwpdata.alt);
+                                    lastwpdata.alt)) {
+                                        CustomMessageBox.Show(Strings.CommandFailed, Strings.ERROR);
+                                        return;
+                                    }
                                 Thread.Sleep(1000);
                                 Application.DoEvents();
                                 timeout++;
@@ -2054,6 +2061,7 @@ namespace MissionPlanner.GCSViews
 
         void dropout_FormClosed(object sender, FormClosedEventArgs e)
         {
+            (sender as Form).SaveStartupLocation();
             //GetFormFromGuid(GetOrCreateGuid("fd_hud_guid")).Controls.Add(hud1);
             SubMainLeft.Panel1.Controls.Add(hud1);
             SubMainLeft.Panel1Collapsed = false;
@@ -2156,8 +2164,8 @@ namespace MissionPlanner.GCSViews
             }
 
             //Remove it later, do not need
-            //groundColorToolStripMenuItem.Checked = Settings.Instance.GetBoolean("groundColorToolStripMenuItem");
-            //groundColorToolStripMenuItem_Click(null, null);
+            groundColorToolStripMenuItem.Checked = Settings.Instance.GetBoolean("groundColorToolStripMenuItem");
+            groundColorToolStripMenuItem_Click(null, null);
 
             hud1.doResize();
 
@@ -2683,11 +2691,13 @@ namespace MissionPlanner.GCSViews
 
             SubMainLeft.Panel1Collapsed = true;
             Form dropout = new Form();
+            dropout.Text = "HUD Dropout";
             dropout.Size = new Size(hud1.Width, hud1.Height + 20);
             SubMainLeft.Panel1.Controls.Remove(hud1);
             dropout.Controls.Add(hud1);
             dropout.Resize += dropout_Resize;
             dropout.FormClosed += dropout_FormClosed;
+            dropout.RestoreStartupLocation();
             dropout.Show();
             huddropout = true;
         }
@@ -2695,6 +2705,8 @@ namespace MissionPlanner.GCSViews
         private void hud1_ekfclick(object sender, EventArgs e)
         {
             EKFStatus frm = new EKFStatus();
+            frm.RestoreStartupLocation();
+            frm.FormClosed += (a, e2) => frm.SaveStartupLocation();
             frm.TopMost = true;
             frm.Show();
         }
@@ -2714,6 +2726,8 @@ namespace MissionPlanner.GCSViews
         private void hud1_vibeclick(object sender, EventArgs e)
         {
             Vibration frm = new Vibration();
+            frm.RestoreStartupLocation();
+            frm.FormClosed += (a, e2) => frm.SaveStartupLocation();
             frm.TopMost = true;
             frm.Show();
         }
@@ -3474,7 +3488,7 @@ namespace MissionPlanner.GCSViews
                                     adsbplane.ToolTipText = "ICAO: " + pllau.Tag + "\n" +
                                                             "CallSign: " + pllau.CallSign + "\n" +
                                                             "Squawk: " + Convert.ToString(pllau.Squawk) + "\n" +
-                                                            "Alt: " + pllau.Alt.ToString("0") + "\n" +
+                                                            "Alt: " + (pllau.Alt * CurrentState.multiplieralt).ToString("0") + "\n" +
                                                             "Speed: " + pllau.Speed.ToString("0") + "\n" +
                                                             "Heading: " + pllau.Heading.ToString("0");
                                     adsbplane.ToolTipMode = MarkerTooltipMode.OnMouseOver;
@@ -4253,7 +4267,8 @@ namespace MissionPlanner.GCSViews
             {
                 if (InputBox.Show("Rows", "Enter number of rows to have.", ref rows) == DialogResult.OK)
                 {
-                    setQuickViewRowsCols(cols, rows);
+                    if (rows.IsNumber() && cols.IsNumber())
+                        setQuickViewRowsCols(cols, rows);
 
                     Activate();
                 }
@@ -4622,6 +4637,9 @@ namespace MissionPlanner.GCSViews
                     updateBindingSourcecount++;
                     updateBindingSourceThreadName = Thread.CurrentThread.Name;
                 }
+
+                if(Disposing)
+                    return;
 
                 this.BeginInvokeIfRequired(delegate
                 {

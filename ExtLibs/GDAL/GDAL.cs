@@ -10,10 +10,12 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using GMap.NET.MapProviders;
+using MissionPlanner.Utilities;
 
 namespace GDAL
 {
-    public static class GDAL
+    public class GDAL: IGDAL
     {
         private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -22,7 +24,14 @@ namespace GDAL
         static GDAL()
         {
             log.InfoFormat("GDAL static ctor");
-            GdalConfiguration.ConfigureGdal();
+            try
+            {
+                GdalConfiguration.ConfigureGdal();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+            }
         }
 
         public delegate void Progress(double percent, string message);
@@ -61,6 +70,11 @@ namespace GDAL
 
             // lowest res first
             _cache.Sort((a, b) => { return b.Resolution.CompareTo(a.Resolution); });
+        }
+
+        public GMapProvider GetProvider()
+        {
+            return GDALProvider.Instance;
         }
 
         public static GeoBitmap LoadImageInfo(string file)
@@ -199,7 +213,7 @@ namespace GDAL
 
                 bool cleared = false;
 
-                foreach (var image in _cache)
+                foreach (var image in _cache.ToArray())
                 {
                     // calc the pixel coord within the image rect
                     var ImageTop = (float)map(request.Top, image.Rect.Top, image.Rect.Bottom, 0, image.RasterYSize);
@@ -532,6 +546,11 @@ namespace GDAL
             }
             Console.WriteLine("");
             return 1;
+        }
+
+        void IGDAL.ScanDirectory(string s)
+        {
+            ScanDirectory(s);
         }
     }
 }

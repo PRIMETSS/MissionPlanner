@@ -19,8 +19,8 @@ using System.Threading.Tasks;
 using Android;
 using Android.Bluetooth;
 using Android.Runtime;
-using AndroidX.AppCompat.Widget;
 using AndroidX.Core.App;
+using Android.Bluetooth;
 using AndroidX.Core.Content;
 using Xamarin.Essentials;
 using MissionPlanner.GCSViews;
@@ -30,6 +30,7 @@ using Settings = MissionPlanner.Utilities.Settings;
 using Thread = System.Threading.Thread;
 using Android.Content;
 using Android.Provider;
+using Android.Widget;
 using Hoho.Android.UsbSerial.Util;
 using Java.Lang;
 using MissionPlanner.Comms;
@@ -40,6 +41,7 @@ using Application = Android.App.Application;
 using Exception = System.Exception;
 using Process = Android.OS.Process;
 using String = System.String;
+using Toolbar = AndroidX.AppCompat.Widget.Toolbar;
 
 [assembly: UsesFeature("android.hardware.usb.host", Required = false)]
 [assembly: UsesFeature("android.hardware.bluetooth", Required = false)]
@@ -52,7 +54,7 @@ namespace Xamarin.Droid
   //global::Android.Content.Intent.CategoryHome,
     [IntentFilter(new[] { global::Android.Content.Intent.ActionMain, global::Android.Content.Intent.ActionAirplaneModeChanged , 
         global::Android.Content.Intent.ActionBootCompleted , UsbManager.ActionUsbDeviceAttached, UsbManager.ActionUsbDeviceDetached, 
-        BluetoothDevice.ActionAclConnected, UsbManager.ActionUsbAccessoryAttached}, 
+        global::Android.Bluetooth.BluetoothDevice.ActionFound, global::Android.Bluetooth.BluetoothDevice.ActionAclConnected, UsbManager.ActionUsbAccessoryAttached}, 
         Categories = new []{ global::Android.Content.Intent.CategoryLauncher})]
     [MetaData("android.hardware.usb.action.USB_DEVICE_ATTACHED", Resource = "@xml/device_filter")]
     [Activity(Label = "Mission Planner", ScreenOrientation = ScreenOrientation.SensorLandscape, Icon = "@mipmap/icon", Theme = "@style/MainTheme", 
@@ -65,6 +67,7 @@ namespace Xamarin.Droid
 
         public static MainActivity Current { private set; get; }
         public static readonly int PickImageId = 1000;
+        private DeviceDiscoveredReceiver BTBroadcastReceiver;
 
         public TaskCompletionSource<string> PickImageTaskCompletionSource { set; get; }
 
@@ -90,14 +93,18 @@ namespace Xamarin.Droid
         {
             Current = this;
 
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
+
             TabLayoutResource = Resource.Layout.Tabbar;
             ToolbarResource = Resource.Layout.Toolbar;
 
             SetSupportActionBar((Toolbar) FindViewById(ToolbarResource));
 
             this.Window.AddFlags(WindowManagerFlags.Fullscreen | WindowManagerFlags.TurnScreenOn | WindowManagerFlags.HardwareAccelerated);
-
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            
+            base.OnCreate(savedInstanceState);
+            Xamarin.Essentials.Platform.Init(this, savedInstanceState);
 
             Settings.CustomUserDataDirectory = Application.Context.GetExternalFilesDir(null).ToString();
             Log.Info("MP", "Settings.CustomUserDataDirectory " + Settings.CustomUserDataDirectory);
@@ -105,6 +112,7 @@ namespace Xamarin.Droid
             WinForms.BundledPath = Application.Context.ApplicationInfo.NativeLibraryDir;
             Log.Info("MP", "WinForms.BundledPath " + WinForms.BundledPath);
 
+            Test.BlueToothDevice = new BTDevice();
             Test.UsbDevices = new USBDevices();
             Test.Radio = new Radio();
 
@@ -124,20 +132,20 @@ namespace Xamarin.Droid
 
             AndroidEnvironment.UnhandledExceptionRaiser += AndroidEnvironment_UnhandledExceptionRaiser;
 
-            base.OnCreate(savedInstanceState);
-            Xamarin.Essentials.Platform.Init(this, savedInstanceState);
-
             {
                 if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.AccessFineLocation) !=
                     (int) Permission.Granted ||
                     ContextCompat.CheckSelfPermission(this, Manifest.Permission.WriteExternalStorage) !=
+                    (int) Permission.Granted ||
+                    ContextCompat.CheckSelfPermission(this, Manifest.Permission.Bluetooth) !=
                     (int) Permission.Granted)
                 {
                     ActivityCompat.RequestPermissions(this,
                         new String[]
                         {
                             Manifest.Permission.AccessFineLocation, Manifest.Permission.LocationHardware,
-                            Manifest.Permission.WriteExternalStorage, Manifest.Permission.ReadExternalStorage
+                            Manifest.Permission.WriteExternalStorage, Manifest.Permission.ReadExternalStorage,
+                            Manifest.Permission.Bluetooth
                         }, 1);
                 }
 
@@ -145,10 +153,13 @@ namespace Xamarin.Droid
                        (int) Permission.Granted)
                 {
                     Thread.Sleep(1000);
+                    var text = "Checking Permissions - " + DateTime.Now.ToString("T");
+
+                    DoToastMessage(text);
                 }
             }
 
-            {
+            try {
                 // print some info
                 var pm = this.PackageManager;
                 var name = this.PackageName;
@@ -156,14 +167,20 @@ namespace Xamarin.Droid
                 var pi = pm.GetPackageInfo(name, PackageInfoFlags.Activities);
 
                 Console.WriteLine("pi.ApplicationInfo.DataDir " + pi?.ApplicationInfo?.DataDir);
+                Console.WriteLine("pi.ApplicationInfo.NativeLibraryDir " + pi?.ApplicationInfo?.NativeLibraryDir);
+
+                // api level 24 - android 7
                 Console.WriteLine("pi.ApplicationInfo.DeviceProtectedDataDir " +
                                   pi?.ApplicationInfo?.DeviceProtectedDataDir);
-                Console.WriteLine("pi.ApplicationInfo.NativeLibraryDir " + pi?.ApplicationInfo?.NativeLibraryDir);
-            }
+            } catch {}
 
             {
+                DoToastMessage("Staging Files");
                 try
                 {
+                    // nofly dir
+                    Directory.CreateDirectory(Settings.GetUserDataDirectory() + Path.DirectorySeparatorChar + "NoFly");
+
                     // restore assets
                     Directory.CreateDirectory(Settings.GetUserDataDirectory());
 
@@ -199,6 +216,75 @@ namespace Xamarin.Droid
                         Settings.GetUserDataDirectory() + Path.DirectorySeparatorChar + "mavcmd.xml", new StreamReader(
                             Resources.OpenRawResource(
                                 Droid.Resource.Raw.mavcmd)).ReadToEnd());
+
+                    {
+                        var pluginsdir = Settings.GetRunningDirectory() + "plugins";
+                        Directory.CreateDirectory(pluginsdir);
+
+                        string[] files = new[]
+                        {
+                            "example2menu", "example3fencedist", "example4herelink", "example5latencytracker",
+                            "example6mapicondesc", "example7canrtcm", "example8modechange", "example9hudonoff",
+                            "examplewatchbutton", "generator", "InitialParamsCalculator"
+                        };
+
+                        foreach (var file in files)
+                        {
+                            try
+                            {
+                                var id = (int) typeof(Droid.Resource.Raw)
+                                    .GetField(file)
+                                    .GetValue(null);
+
+                                var filename = pluginsdir + Path.DirectorySeparatorChar + file + ".cs";
+
+                                if (File.Exists(filename))
+                                {
+                                    File.Delete(filename);
+                                }
+
+                                /*
+                                File.WriteAllText(filename
+                                    ,
+                                    new StreamReader(
+                                        Resources.OpenRawResource(id)).ReadToEnd());
+                                */
+                            }
+                            catch
+                            {
+
+                            }
+                        }
+                    }
+
+                    {
+                        var graphsdir = Settings.GetRunningDirectory() + "graphs";
+                        Directory.CreateDirectory(graphsdir);
+
+                        string[] files = new[]
+                        {
+                            "ekf3Graphs", "ekfGraphs", "mavgraphs", "mavgraphs2", "mavgraphsMP"
+                        };
+
+                        foreach (var file in files)
+                        {
+                            try
+                            {
+                                var id = (int) typeof(Droid.Resource.Raw)
+                                    .GetField(file)
+                                    .GetValue(null);
+
+                                File.WriteAllText(
+                                    graphsdir + Path.DirectorySeparatorChar + file + ".xml",
+                                    new StreamReader(
+                                        Resources.OpenRawResource(id)).ReadToEnd());
+                            }
+                            catch
+                            {
+
+                            }
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -222,11 +308,128 @@ namespace Xamarin.Droid
                 // clean start, see if it was an intent/usb attach
                 if (savedInstanceState == null)
                 {
+                    DoToastMessage("Init Saved State");
                     proxyIfUsbAttached(this.Intent);
                 }
             }
 
+            GC.Collect();
+            Task.Run(() =>
+            {
+                var gdaldir = Settings.GetRunningDirectory() + "gdalimages";
+                Directory.CreateDirectory(gdaldir);
+
+                MissionPlanner.Utilities.GDAL.GDALBase = new GDAL.GDAL();
+
+                GDAL.GDAL.ScanDirectory(gdaldir);
+
+                GMap.NET.MapProviders.GMapProviders.List.Add(GDAL.GDALProvider.Instance);
+            });
+
+
+            DoToastMessage("Launch App");
+
             LoadApplication(new App());
+        }
+
+        public override bool OnKeyDown([GeneratedEnum] Keycode keyCode, KeyEvent e)
+        {
+            Log.Debug(TAG, "OnKeyDown " + keyCode);
+            switch (keyCode)
+            {
+                case Keycode.VolumeUp:
+                    Toast.MakeText(this, "VolumeUp key pressed", ToastLength.Short).Show();
+                    e.StartTracking();
+                    return true;
+                case Keycode.ButtonL1:
+                    e.StartTracking();
+                    return true;
+                case Keycode.ButtonL2:
+                    e.StartTracking();
+                    return true;
+                case Keycode.ButtonR1:
+                    e.StartTracking();
+                    return true;
+                case Keycode.ButtonR2:
+                    e.StartTracking();
+                    return true;  
+                case Keycode.ButtonMode:
+                    e.StartTracking();
+                    return true;
+                case Keycode.ButtonSelect:
+                    e.StartTracking();
+                    return true;
+            }
+
+            return base.OnKeyDown(keyCode, e);
+        }
+
+        public override bool OnKeyUp([GeneratedEnum] Keycode keyCode, KeyEvent e)
+        {
+            Log.Debug(TAG, "OnKeyUp " + keyCode);
+
+            if ((e.Flags & KeyEventFlags.CanceledLongPress) == 0)
+            {
+                if (keyCode == Keycode.VolumeUp)
+                {
+                    Log.Error(TAG, "Short press KEYCODE_VOLUME_UP");
+                    return true;
+                }
+                else if (keyCode == Keycode.VolumeDown)
+                {
+                    Log.Error(TAG, "Short press KEYCODE_VOLUME_DOWN");
+                    return true;
+                }
+            }
+
+            return base.OnKeyUp(keyCode, e);
+        }
+
+        public override bool OnKeyLongPress([GeneratedEnum] Keycode keyCode, KeyEvent e)
+        {
+            Log.Debug(TAG, "OnKeyLongPress " + keyCode);
+
+            if (keyCode == Keycode.VolumeUp)
+            {
+                Log.Debug(TAG, "Long press KEYCODE_VOLUME_UP");
+                return true;
+            }
+            else if (keyCode == Keycode.VolumeDown)
+            {
+                Log.Debug(TAG, "Long press KEYCODE_VOLUME_DOWN");
+                return true;
+            }
+
+            return base.OnKeyLongPress(keyCode, e);
+        }
+
+        private void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
+        {
+            Log.Error(TAG, e.Exception.ToString());
+            Debugger.Break();
+        }
+
+        private void DoToastMessage(string text, ToastLength toastLength = ToastLength.Short)
+        {
+            try
+            {
+                // thread to force invoke into ui thread
+                Task.Run(() =>
+                {
+                    if (!this.IsFinishing)
+                    {
+                        //if (Looper.MainLooper.IsCurrentThread)
+                        {
+                            // On UI thread.
+                            RunOnUiThread(() =>
+                            {
+                                Toast toast = Toast.MakeText(this, text, toastLength);
+                                toast.Show();
+                            });
+                        }
+                    }
+                });
+            } catch {}
         }
 
         protected override void OnNewIntent(Intent intent)
@@ -288,6 +491,7 @@ namespace Xamarin.Droid
             Log.Error("MP", e.Exception.StackTrace.ToString());
             Debugger.Break();
             e.Handled = true;
+            DoToastMessage("ERROR " + e.Exception.Message, ToastLength.Long);
             throw e.Exception;
         }
 
@@ -308,6 +512,11 @@ namespace Xamarin.Droid
             UsbBroadcastReceiver = new UsbDeviceReceiver(this);
             RegisterReceiver(UsbBroadcastReceiver, new IntentFilter(UsbManager.ActionUsbDeviceDetached));
             RegisterReceiver(UsbBroadcastReceiver, new IntentFilter(UsbManager.ActionUsbDeviceAttached));
+
+            // Register for broadcasts when a device is discovered
+            BTBroadcastReceiver = new DeviceDiscoveredReceiver(this);
+            RegisterReceiver(BTBroadcastReceiver, new IntentFilter(BluetoothDevice.ActionFound));
+            RegisterReceiver(BTBroadcastReceiver, new IntentFilter(BluetoothAdapter.ActionDiscoveryFinished));
         }
 
         protected override void OnPause()
@@ -316,7 +525,9 @@ namespace Xamarin.Droid
 
             StopD2DInfo();
 
-            UnregisterReceiver(UsbBroadcastReceiver);            
+            UnregisterReceiver(UsbBroadcastReceiver);
+
+            UnregisterReceiver(BTBroadcastReceiver);
         }
 
         public void StopD2DInfo()
@@ -372,9 +583,9 @@ namespace Xamarin.Droid
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Log.Warn(TAG, e.ExceptionObject.ToString());
+            Log.Error(TAG, e.ExceptionObject.ToString());
+            Debugger.Break();
         }
-
 
     }
 }
