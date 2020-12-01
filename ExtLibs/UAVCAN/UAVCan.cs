@@ -77,7 +77,7 @@ namespace UAVCAN
             int lastcha = 0;
 
             var timeout = DateTime.UtcNow.AddMilliseconds(timeoutms);
-
+            
             try
             {
                 do
@@ -85,13 +85,6 @@ namespace UAVCAN
                     cha = st.ReadByte();
                     if (cha == -1)
                         break;
-                    try
-                    {
-                        logfile?.WriteByte((byte) cha);
-                    }
-                    catch
-                    {
-                    }
 
                     sb.Append((char) cha);
                     if (DateTime.UtcNow > timeout)
@@ -109,6 +102,21 @@ namespace UAVCAN
             }
             catch
             {
+            }
+            finally
+            {
+                try
+                {
+                    logfilesemaphore.Wait();
+                    logfile?.Write(ASCIIEncoding.ASCII.GetBytes(sb.ToString()), 0, sb.Length);
+                }
+                catch
+                {
+                }
+                finally
+                {
+                    logfilesemaphore.Release();
+                }
             }
 
             return sb.ToString();
@@ -887,8 +895,17 @@ namespace UAVCAN
 
         public void SetupDynamicNodeAllocator()
         {
+            // is it already setup
+            if (DynamicNodeAllocator)
+                return;
+
+            DynamicNodeAllocator = true;
+            
             MessageReceived += (frame, msg, transferID) =>
             {
+                if (!DynamicNodeAllocator)
+                    return;
+
                 if (frame.TransferType == CANFrame.FrameType.service &&
                     msg.GetType() == typeof(uavcan.uavcan_protocol_GetNodeInfo_res))
                 {
@@ -950,7 +967,7 @@ namespace UAVCAN
                                 if (allocation.node_id != 0)
                                 {
                                     var a = allocation.node_id;
-                                    if (!NodeList.ContainsKey(a))
+                                    if (!NodeList.ContainsKey(a) && !allocated.ContainsKey(a))
                                     {
                                         allocation.node_id = (byte) a;
                                         Console.WriteLine("Allocate " + a);
@@ -962,7 +979,7 @@ namespace UAVCAN
                                 if (!set) // use auto allocation
                                     for (byte a = 125; a >= 1; a--)
                                     {
-                                        if (!NodeList.ContainsKey(a))
+                                        if (!NodeList.ContainsKey(a) && !allocated.ContainsKey(a))
                                         {
                                             allocation.node_id = (byte) a;
                                             Console.WriteLine("Allocate " + a);
@@ -988,6 +1005,8 @@ namespace UAVCAN
                 }
             };
         }
+
+        public bool DynamicNodeAllocator { get; set; } = false;
 
         public string LookForUpdate(string devicename, double hwversion, bool usebeta = false)
         {
@@ -1264,6 +1283,19 @@ namespace UAVCAN
                     if (sr.CanWrite)
                     {
                         sr.Write(ASCIIEncoding.ASCII.GetBytes(line + '\r'), 0, line.Length + 1);
+
+                        try
+                        {
+                            logfilesemaphore.Wait();
+                            logfile?.Write(ASCIIEncoding.ASCII.GetBytes(line + '\r'), 0, line.Length + 1);
+                        }
+                        catch
+                        {
+                        }
+                        finally
+                        {
+                            logfilesemaphore.Release();
+                        }
 
                         // wait 50ms for a message send ack
                         /*DateTime deadline = DateTime.Now.AddMilliseconds(1);
@@ -1557,6 +1589,7 @@ velocity_covariance: [1.8525, 0.0000, 0.0000, 0.0000, 1.8525, 0.0000, 0.0000, 0.
             }
             else if (line[0] == 'Z')
             {
+                cmdack = true;
                 return;
             }
             else
@@ -1569,6 +1602,13 @@ velocity_covariance: [1.8525, 0.0000, 0.0000, 0.0000, 1.8525, 0.0000, 0.0000, 0.
 
             //T12ABCDEF2AA55 : extended can_id 0x12ABCDEF, can_dlc 2, data 0xAA 0x55
             var msgdata = line.Substring(1, id_len);// new string(line.Skip(1).Take(id_len).ToArray());
+            if (msgdata.Contains("T")) // bad packet
+            {
+                Console.WriteLine("Bad SLCAN " + line);
+                var idx= line.IndexOf("T", 1);
+                ReadMessage(line.Substring(idx ));
+                return;
+            }
             var packet_id = Convert.ToUInt32(msgdata, 16); // id
             var packet_len = line[1 + id_len] - 48; // dlc
             var with_timestamp = line_len > (2 + id_len + packet_len * 2);
@@ -1860,6 +1900,7 @@ velocity_covariance: [1.8525, 0.0000, 0.0000, 0.0000, 1.8525, 0.0000, 0.0000, 0.
 
         private bool run;
         private Stream logfile;
+        private SemaphoreSlim logfilesemaphore = new SemaphoreSlim(1);
         private bool cmdack;
 
         public int Read(byte b)
