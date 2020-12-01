@@ -5198,9 +5198,10 @@ namespace MissionPlanner.GCSViews
                 var mp = new MissionPlanner.GCSViews.ConfigurationView.ConfigSerialInjectGPS();
                                 
                  mp.BUT_connect_Click(null, null);
-            //    Thread.Sleep(10000); // Wait for ComPort to open
-            //    mp.but_restartsvin_Click(null, null); // Restart Survey (This invalidates RTCM) (Doesnt appear to be working! Does update uBlox Module's TMode)
-            // uBlox will default to what ever survey TMODE3 is set in NVR Config
+                //    Thread.Sleep(1000); // Wait for ComPort to open
+                mp.but_restartsvin_Click(null, null); // Restart Survey (This invalidates RTCM)
+                // Ref GIT Issue https://github.com/ArduPilot/MissionPlanner/issues/2512 Re latest MP version had issue with Restart not using entered values
+                // Was fixed in https://github.com/ArduPilot/MissionPlanner/commit/7d8716a561983d0c94c4c371746e77291c136e68
 
             }
             catch (Exception ex)

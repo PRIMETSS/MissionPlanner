@@ -25,6 +25,7 @@
             this.russianHudToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.swapWithMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.groundColorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setBatteryCellCountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bindingSourceHud = new System.Windows.Forms.BindingSource(this.components);
             this.tabControlactions = new System.Windows.Forms.TabControl();
             this.contextMenuStripactionstab = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -42,7 +43,6 @@
             this.quickView1 = new MissionPlanner.Controls.QuickView();
             this.tabActions = new System.Windows.Forms.TabPage();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.BUT_injectGPSRTK = new MissionPlanner.Controls.MyButton();
             this.BUT_abortland = new MissionPlanner.Controls.MyButton();
             this.modifyandSetLoiterRad = new MissionPlanner.Controls.ModifyandSet();
             this.BUT_clear_track = new MissionPlanner.Controls.MyButton();
@@ -190,7 +190,7 @@
             this.scriptChecker = new System.Windows.Forms.Timer(this.components);
             this.Messagetabtimer = new System.Windows.Forms.Timer(this.components);
             this.bindingSourceStatusTab = new System.Windows.Forms.BindingSource(this.components);
-            this.setBatteryCellCountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.BUT_injectGPSRTK = new MissionPlanner.Controls.MyButton();
             ((System.ComponentModel.ISupportInitialize)(this.MainH)).BeginInit();
             this.MainH.Panel1.SuspendLayout();
             this.MainH.Panel2.SuspendLayout();
@@ -332,6 +332,7 @@
             this.hud1.DataBindings.Add(new System.Windows.Forms.Binding("critAOA", this.bindingSourceHud, "crit_AOA", true));
             this.hud1.datetime = new System.DateTime(((long)(0)));
             this.hud1.displayAOASSA = false;
+            this.hud1.displayCellVoltage = false;
             this.hud1.disttowp = 0F;
             this.hud1.distunit = null;
             resources.ApplyResources(this.hud1, "hud1");
@@ -479,6 +480,11 @@
             this.groundColorToolStripMenuItem.Name = "groundColorToolStripMenuItem";
             resources.ApplyResources(this.groundColorToolStripMenuItem, "groundColorToolStripMenuItem");
             this.groundColorToolStripMenuItem.Click += new System.EventHandler(this.groundColorToolStripMenuItem_Click);
+            // 
+            // setBatteryCellCountToolStripMenuItem
+            // 
+            this.setBatteryCellCountToolStripMenuItem.Name = "setBatteryCellCountToolStripMenuItem";
+            resources.ApplyResources(this.setBatteryCellCountToolStripMenuItem, "setBatteryCellCountToolStripMenuItem");
             // 
             // bindingSourceHud
             // 
@@ -661,17 +667,6 @@
             this.tableLayoutPanel1.Controls.Add(this.BUT_quickauto, 2, 0);
             this.tableLayoutPanel1.Controls.Add(this.BUT_setmode, 1, 2);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            // 
-            // BUT_injectGPSRTK
-            // 
-            this.BUT_injectGPSRTK.ColorMouseDown = System.Drawing.Color.Empty;
-            this.BUT_injectGPSRTK.ColorMouseOver = System.Drawing.Color.Empty;
-            this.BUT_injectGPSRTK.ColorNotEnabled = System.Drawing.Color.Empty;
-            resources.ApplyResources(this.BUT_injectGPSRTK, "BUT_injectGPSRTK");
-            this.BUT_injectGPSRTK.Name = "BUT_injectGPSRTK";
-            this.toolTip1.SetToolTip(this.BUT_injectGPSRTK, resources.GetString("BUT_injectGPSRTK.ToolTip"));
-            this.BUT_injectGPSRTK.UseVisualStyleBackColor = true;
-            this.BUT_injectGPSRTK.Click += new System.EventHandler(this.BUT_injectGPSRTK_Click);
             // 
             // BUT_abortland
             // 
@@ -1770,178 +1765,6 @@
             // 
             // tabTLogs
             // 
-            this.tabScripts.Controls.Add(this.checkBoxRedirectOutput);
-            this.tabScripts.Controls.Add(this.BUT_edit_selected);
-            this.tabScripts.Controls.Add(this.labelSelectedScript);
-            this.tabScripts.Controls.Add(this.BUT_run_script);
-            this.tabScripts.Controls.Add(this.BUT_abort_script);
-            this.tabScripts.Controls.Add(this.labelScriptStatus);
-            this.tabScripts.Controls.Add(this.BUT_select_script);
-            resources.ApplyResources(this.tabScripts, "tabScripts");
-            this.tabScripts.Name = "tabScripts";
-            this.tabScripts.UseVisualStyleBackColor = true;
-            // 
-            // checkBoxRedirectOutput
-            // 
-            resources.ApplyResources(this.checkBoxRedirectOutput, "checkBoxRedirectOutput");
-            this.checkBoxRedirectOutput.Checked = true;
-            this.checkBoxRedirectOutput.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxRedirectOutput.Name = "checkBoxRedirectOutput";
-            this.checkBoxRedirectOutput.UseVisualStyleBackColor = true;
-            // 
-            // BUT_edit_selected
-            // 
-            this.BUT_edit_selected.ColorMouseDown = System.Drawing.Color.Empty;
-            this.BUT_edit_selected.ColorMouseOver = System.Drawing.Color.Empty;
-            this.BUT_edit_selected.ColorNotEnabled = System.Drawing.Color.Empty;
-            resources.ApplyResources(this.BUT_edit_selected, "BUT_edit_selected");
-            this.BUT_edit_selected.Name = "BUT_edit_selected";
-            this.BUT_edit_selected.UseVisualStyleBackColor = true;
-            this.BUT_edit_selected.Click += new System.EventHandler(this.BUT_edit_selected_Click);
-            // 
-            // labelSelectedScript
-            // 
-            resources.ApplyResources(this.labelSelectedScript, "labelSelectedScript");
-            this.labelSelectedScript.Name = "labelSelectedScript";
-            // 
-            // BUT_run_script
-            // 
-            this.BUT_run_script.ColorMouseDown = System.Drawing.Color.Empty;
-            this.BUT_run_script.ColorMouseOver = System.Drawing.Color.Empty;
-            this.BUT_run_script.ColorNotEnabled = System.Drawing.Color.Empty;
-            resources.ApplyResources(this.BUT_run_script, "BUT_run_script");
-            this.BUT_run_script.Name = "BUT_run_script";
-            this.BUT_run_script.UseVisualStyleBackColor = true;
-            this.BUT_run_script.Click += new System.EventHandler(this.BUT_run_script_Click);
-            // 
-            // BUT_abort_script
-            // 
-            this.BUT_abort_script.ColorMouseDown = System.Drawing.Color.Empty;
-            this.BUT_abort_script.ColorMouseOver = System.Drawing.Color.Empty;
-            this.BUT_abort_script.ColorNotEnabled = System.Drawing.Color.Empty;
-            resources.ApplyResources(this.BUT_abort_script, "BUT_abort_script");
-            this.BUT_abort_script.Name = "BUT_abort_script";
-            this.BUT_abort_script.UseVisualStyleBackColor = true;
-            this.BUT_abort_script.Click += new System.EventHandler(this.BUT_abort_script_Click);
-            // 
-            // labelScriptStatus
-            // 
-            resources.ApplyResources(this.labelScriptStatus, "labelScriptStatus");
-            this.labelScriptStatus.Name = "labelScriptStatus";
-            // 
-            // BUT_select_script
-            // 
-            this.BUT_select_script.ColorMouseDown = System.Drawing.Color.Empty;
-            this.BUT_select_script.ColorMouseOver = System.Drawing.Color.Empty;
-            this.BUT_select_script.ColorNotEnabled = System.Drawing.Color.Empty;
-            resources.ApplyResources(this.BUT_select_script, "BUT_select_script");
-            this.BUT_select_script.Name = "BUT_select_script";
-            this.BUT_select_script.UseVisualStyleBackColor = true;
-            this.BUT_select_script.Click += new System.EventHandler(this.BUT_select_script_Click);
-            // 
-            // tabPayload
-            // 
-            this.tabPayload.Controls.Add(this.BUT_PayloadFolder);
-            this.tabPayload.Controls.Add(this.groupBoxRoll);
-            this.tabPayload.Controls.Add(this.groupBoxYaw);
-            this.tabPayload.Controls.Add(this.BUT_resetGimbalPos);
-            this.tabPayload.Controls.Add(this.groupBoxPitch);
-            resources.ApplyResources(this.tabPayload, "tabPayload");
-            this.tabPayload.Name = "tabPayload";
-            this.tabPayload.UseVisualStyleBackColor = true;
-            // 
-            // BUT_PayloadFolder
-            // 
-            resources.ApplyResources(this.BUT_PayloadFolder, "BUT_PayloadFolder");
-            this.BUT_PayloadFolder.Name = "BUT_PayloadFolder";
-            this.BUT_PayloadFolder.UseVisualStyleBackColor = true;
-            // 
-            // groupBoxRoll
-            // 
-            this.groupBoxRoll.Controls.Add(this.TXT_gimbalRollPos);
-            this.groupBoxRoll.Controls.Add(this.trackBarRoll);
-            resources.ApplyResources(this.groupBoxRoll, "groupBoxRoll");
-            this.groupBoxRoll.Name = "groupBoxRoll";
-            this.groupBoxRoll.TabStop = false;
-            // 
-            // TXT_gimbalRollPos
-            // 
-            this.TXT_gimbalRollPos.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.bindingSourcePayloadTab, "campointb", true));
-            resources.ApplyResources(this.TXT_gimbalRollPos, "TXT_gimbalRollPos");
-            this.TXT_gimbalRollPos.Name = "TXT_gimbalRollPos";
-            // 
-            // bindingSourcePayloadTab
-            // 
-            this.bindingSourcePayloadTab.DataSource = typeof(MissionPlanner.CurrentState);
-            // 
-            // trackBarRoll
-            // 
-            resources.ApplyResources(this.trackBarRoll, "trackBarRoll");
-            this.trackBarRoll.LargeChange = 10;
-            this.trackBarRoll.Maximum = 45;
-            this.trackBarRoll.Minimum = -45;
-            this.trackBarRoll.Name = "trackBarRoll";
-            this.trackBarRoll.TickFrequency = 10;
-            this.trackBarRoll.Scroll += new System.EventHandler(this.gimbalTrackbar_Scroll);
-            // 
-            // groupBoxYaw
-            // 
-            this.groupBoxYaw.Controls.Add(this.TXT_gimbalYawPos);
-            this.groupBoxYaw.Controls.Add(this.trackBarYaw);
-            resources.ApplyResources(this.groupBoxYaw, "groupBoxYaw");
-            this.groupBoxYaw.Name = "groupBoxYaw";
-            this.groupBoxYaw.TabStop = false;
-            // 
-            // TXT_gimbalYawPos
-            // 
-            this.TXT_gimbalYawPos.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.bindingSourcePayloadTab, "campointc", true));
-            resources.ApplyResources(this.TXT_gimbalYawPos, "TXT_gimbalYawPos");
-            this.TXT_gimbalYawPos.Name = "TXT_gimbalYawPos";
-            // 
-            // trackBarYaw
-            // 
-            resources.ApplyResources(this.trackBarYaw, "trackBarYaw");
-            this.trackBarYaw.LargeChange = 10;
-            this.trackBarYaw.Maximum = 45;
-            this.trackBarYaw.Minimum = -45;
-            this.trackBarYaw.Name = "trackBarYaw";
-            this.trackBarYaw.TickFrequency = 10;
-            this.trackBarYaw.Scroll += new System.EventHandler(this.gimbalTrackbar_Scroll);
-            // 
-            // BUT_resetGimbalPos
-            // 
-            resources.ApplyResources(this.BUT_resetGimbalPos, "BUT_resetGimbalPos");
-            this.BUT_resetGimbalPos.Name = "BUT_resetGimbalPos";
-            this.BUT_resetGimbalPos.UseVisualStyleBackColor = true;
-            this.BUT_resetGimbalPos.Click += new System.EventHandler(this.BUT_resetGimbalPos_Click);
-            // 
-            // groupBoxPitch
-            // 
-            this.groupBoxPitch.Controls.Add(this.trackBarPitch);
-            this.groupBoxPitch.Controls.Add(this.TXT_gimbalPitchPos);
-            resources.ApplyResources(this.groupBoxPitch, "groupBoxPitch");
-            this.groupBoxPitch.Name = "groupBoxPitch";
-            this.groupBoxPitch.TabStop = false;
-            // 
-            // trackBarPitch
-            // 
-            resources.ApplyResources(this.trackBarPitch, "trackBarPitch");
-            this.trackBarPitch.LargeChange = 10;
-            this.trackBarPitch.Maximum = 45;
-            this.trackBarPitch.Minimum = -45;
-            this.trackBarPitch.Name = "trackBarPitch";
-            this.trackBarPitch.SmallChange = 5;
-            this.trackBarPitch.TickFrequency = 10;
-            this.trackBarPitch.Scroll += new System.EventHandler(this.gimbalTrackbar_Scroll);
-            // 
-            // TXT_gimbalPitchPos
-            // 
-            this.TXT_gimbalPitchPos.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.bindingSourcePayloadTab, "campointa", true));
-            resources.ApplyResources(this.TXT_gimbalPitchPos, "TXT_gimbalPitchPos");
-            this.TXT_gimbalPitchPos.Name = "TXT_gimbalPitchPos";
-            // 
-            // tabTLogs
-            // 
             this.tabTLogs.Controls.Add(this.tableLayoutPaneltlogs);
             resources.ApplyResources(this.tabTLogs, "tabTLogs");
             this.tabTLogs.Name = "tabTLogs";
@@ -2399,7 +2222,7 @@
             this.windDir1.BackColor = System.Drawing.Color.Transparent;
             this.windDir1.DataBindings.Add(new System.Windows.Forms.Binding("Direction", this.bindingSource1, "wind_dir", true, System.Windows.Forms.DataSourceUpdateMode.Never));
             this.windDir1.DataBindings.Add(new System.Windows.Forms.Binding("Speed", this.bindingSource1, "wind_vel", true, System.Windows.Forms.DataSourceUpdateMode.Never));
-            this.windDir1.Direction = 180D;
+            this.windDir1.Direction = 360D;
             resources.ApplyResources(this.windDir1, "windDir1");
             this.windDir1.Name = "windDir1";
             this.windDir1.Speed = 0D;
@@ -2599,13 +2422,18 @@
             // bindingSourceStatusTab
             // 
             this.bindingSourceStatusTab.DataSource = typeof(MissionPlanner.CurrentState);
-            //
-            // setBatteryCellCountToolStripMenuItem
             // 
-            this.setBatteryCellCountToolStripMenuItem.Name = "setBatteryCellCountToolStripMenuItem";
-            resources.ApplyResources(this.setBatteryCellCountToolStripMenuItem, "setBatteryCellCountToolStripMenuItem");
-            //this.setBatteryCellCountToolStripMenuItem.Click += new System.EventHandler(this.setBatteryCellCountToolStripMenuItem_Click);
-            //
+            // BUT_injectGPSRTK
+            // 
+            this.BUT_injectGPSRTK.ColorMouseDown = System.Drawing.Color.Empty;
+            this.BUT_injectGPSRTK.ColorMouseOver = System.Drawing.Color.Empty;
+            this.BUT_injectGPSRTK.ColorNotEnabled = System.Drawing.Color.Empty;
+            resources.ApplyResources(this.BUT_injectGPSRTK, "BUT_injectGPSRTK");
+            this.BUT_injectGPSRTK.Name = "BUT_injectGPSRTK";
+            this.toolTip1.SetToolTip(this.BUT_injectGPSRTK, resources.GetString("BUT_injectGPSRTK.ToolTip"));
+            this.BUT_injectGPSRTK.UseVisualStyleBackColor = true;
+            this.BUT_injectGPSRTK.Click += new System.EventHandler(this.BUT_injectGPSRTK_Click);
+            // 
             // FlightData
             // 
             this.Controls.Add(this.MainH);
@@ -2865,7 +2693,7 @@
         private System.Windows.Forms.ToolStripMenuItem flyToCoordsToolStripMenuItem;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
-        private Controls.MyButton BUT_injectGPSRTK;
         private System.Windows.Forms.ToolStripMenuItem setBatteryCellCountToolStripMenuItem;
+        private Controls.MyButton BUT_injectGPSRTK;
     }
 }
